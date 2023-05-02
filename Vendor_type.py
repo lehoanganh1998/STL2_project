@@ -1,7 +1,5 @@
 import csv
 
-# Define minimum number of wallets for identifying potential vendors
-min_wallets = 3
 
 # Read in vendor addresses and wallet counts from CSV file
 vendor_addresses = {}
