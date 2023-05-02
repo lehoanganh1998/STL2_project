@@ -5,7 +5,7 @@ min_wallets = 3
 
 # Read in vendor addresses and wallet counts from CSV file
 vendor_addresses = {}
-with open("Vendor_results.csv", mode="r") as csvfile:
+with open("vendor_results.csv", mode="r") as csvfile:
     reader = csv.reader(csvfile)
     next(reader)  # skip header row
     for row in reader:
@@ -18,7 +18,7 @@ vendor_type_counts = {"Small": 0, "Medium": 0, "Large": 0}
 for vendor_address, wallet_count in vendor_addresses.items():
     if wallet_count < 10:
         vendor_type_counts["Small"] += 1
-    elif wallet_count < 20:
+    elif wallet_count < 100:
         vendor_type_counts["Medium"] += 1
     else:
         vendor_type_counts["Large"] += 1

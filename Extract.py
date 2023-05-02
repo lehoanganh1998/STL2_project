@@ -5,7 +5,7 @@ import requests
 from tqdm import tqdm
 import os
 import statistics
-
+import pprint
 addresses_df = pd.read_csv("dataset/addresses.csv")
 btc_addresses = addresses_df['account'].tolist()
 
@@ -75,13 +75,13 @@ for address in tqdm(btc_addresses):
 
         unique_address_count = len(unique_addresses)
         
-        features.append((address, lifetime, active_days, incoming_amount, outgoing_amount, incoming_tx_count, outgoing_tx_count, avg_transaction_value, largest_transaction_value, smallest_transaction_value, incoming_transaction_volume, outgoing_transaction_volume, transaction_frequency, incoming_outgoing_ratio, avg_transaction_fee, largest_transaction_fee, smallest_transaction_fee, unique_address_count))
-
+        features.append((address, first_seen,lifetime, active_days, incoming_amount, outgoing_amount, incoming_tx_count, outgoing_tx_count, avg_transaction_value, largest_transaction_value, smallest_transaction_value, incoming_transaction_volume, outgoing_transaction_volume, transaction_frequency, incoming_outgoing_ratio, avg_transaction_fee, largest_transaction_fee, smallest_transaction_fee, unique_address_count))
+        time.sleep(delay_seconds)
     except KeyboardInterrupt:
         break
 
 # Update the columns list with the new features
-columns=['address', 'lifetime', 'active_days', 'incoming_amount', 'outgoing_amount', 'incoming_tx_count', 'outgoing_tx_count', 'avg_transaction_value', 'largest_transaction_value', 'smallest_transaction_value', 'incoming_transaction_volume', 'outgoing_transaction_volume', 'transaction_frequency', 'incoming_outgoing_ratio', 'avg_transaction_fee', 'largest_transaction_fee', 'smallest_transaction_fee', 'unique_address_count']
+columns=['address', 'first_seen','lifetime', 'active_days', 'incoming_amount', 'outgoing_amount', 'incoming_tx_count', 'outgoing_tx_count', 'avg_transaction_value', 'largest_transaction_value', 'smallest_transaction_value', 'incoming_transaction_volume', 'outgoing_transaction_volume', 'transaction_frequency', 'incoming_outgoing_ratio', 'avg_transaction_fee', 'largest_transaction_fee', 'smallest_transaction_fee', 'unique_address_count']
 df = pd.DataFrame(features, columns=columns)
 
 # Save the DataFrame to a CSV file
