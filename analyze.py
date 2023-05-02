@@ -2,16 +2,15 @@ import datetime
 import pandas as pd
 import time
 import requests
-from tqdm import tqdm
 import os
 import csv
-
+from tqdm import tqdm
 addresses_df = pd.read_csv("dataset/addresses.csv")
 btc_addresses = addresses_df['account'].tolist()
 
 delay_seconds = 0.1   # Delay between requests in seconds for the limit
-features = []
-
+vendor_addresses = []
+threshold = 5
 def fetch_address_data(address):
     url = f"https://blockstream.info/api/address/{address}/txs"
     response = requests.get(url)
@@ -20,51 +19,39 @@ def fetch_address_data(address):
     else:
         raise ValueError(f"Unable to fetch data for address {address}")
 
-# Define thresholds
-min_wallets = 3
-vendor_addresses = {}
-
 # Iterate through each Bitcoin address
 for address in tqdm(btc_addresses):
     try:
         # Fetch transaction data for the current address
         data = fetch_address_data(address)
 
-        # Find potential vendor addresses
-        potential_vendor_addresses = set()
-        for tx in data:
-            if 'vin' in tx and tx['vin'][0]['prevout']['scriptpubkey_address'] == address:
-                for vout in tx['vout']:
-                    potential_vendor_addresses.add(vout['scriptpubkey_address'])
-
         # Check potential vendor addresses
-        best_vendor_address = None
-        best_vendor_wallet_count = 0
-        for potential_vendor_address in potential_vendor_addresses:
-            vendor_data = fetch_address_data(potential_vendor_address)
-            vendor_wallet_count = len(set([tx['vin'][0]['prevout']['scriptpubkey_address'] for tx in vendor_data if 'vin' in tx]))
-            if vendor_wallet_count >= min_wallets and vendor_wallet_count > best_vendor_wallet_count:
-                best_vendor_address = potential_vendor_address
-                best_vendor_wallet_count = vendor_wallet_count
+        is_vendor = False
+        sender_all = set()
+        sender_in = set()
+        for tx in data:
+            if len(tx.get('vin', [])) > 0 and len(tx.get('vout', [])) > 0:
+                sender_addresses = set([vin['prevout']['scriptpubkey_address'] for vin in tx['vin']])
+                receiver_addresses = set([vout['scriptpubkey_address'] for vout in tx['vout']])
+                if address in receiver_addresses:
+                    sender_in.update(sender_addresses)
+                sender_all.update(sender_addresses)
 
-        # Add the best candidate vendor address to the dictionary
-        if best_vendor_address is not None:
-            if best_vendor_address not in vendor_addresses:
-                vendor_addresses[best_vendor_address] = 1
-            else:
-                vendor_addresses[best_vendor_address] += 1
+        unique_sender_out = sender_all - sender_in
+        
+        if len(unique_sender_out) > threshold and len(sender_all.intersection(sender_in)) > 0:
+            intersection_wallet = sender_all.intersection(sender_in).pop() if len(sender_all.intersection(sender_in)) > 0 else None
+            vendor_addresses.append((address, len(unique_sender_out), intersection_wallet))
+
         time.sleep(delay_seconds)
     except KeyboardInterrupt:
         break
 
-# Filter vendor addresses by wallet count
-filtered_vendor_addresses = {k: v for k, v in vendor_addresses.items() if v >= min_wallets}
-
-# Output vendor addresses and wallet counts to CSV file
-with open("vendor_wallet_counts.csv", mode="w", newline="") as csvfile:
+# Output vendor addresses to CSV file
+with open("vendor_addresses.csv", mode="w", newline="") as csvfile:
     writer = csv.writer(csvfile)
-    writer.writerow(["Vendor Address", "Wallet Count"])
-    for vendor_address, wallet_count in filtered_vendor_addresses.items():
-        writer.writerow([vendor_address, wallet_count])
+    writer.writerow(["Vendor Address", "Num Unique Senders", "Intersection Wallet"])
+    for vendor_address in vendor_addresses:
+        writer.writerow([vendor_address[0], vendor_address[1], vendor_address[2]])
 
-print("Vendor wallet counts written to vendor_wallet_counts.csv")
+print("Vendor addresses written to vendor_addresses.csv.")
