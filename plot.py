@@ -1,27 +1,23 @@
+import pandas as pd
 import matplotlib.pyplot as plt
-import pandas as pd
-import os
 
-import pandas as pd
-import seaborn as sns
+# Read the CSV file into a pandas DataFrame
+df = pd.read_csv('result/addresses_updated_price.csv')
 
-# Read in the results file and create a DataFrame
-df = pd.read_csv("addresses_results.csv")
 
-df['first_seen'] = pd.to_datetime(df['first_seen'])
-df = df.sort_values(by='first_seen')
-x = df['first_seen']
-y = df['unique_address_count']
+# Create a new pandas Series with the desired y-values
+# Round the 'total_sent_usd' column to 2 decimal places
+df['total_sent_usd'] = df['total_sent_usd'].round(2)
+print(max(df['total_sent_usd']))
+exit()
+# Create a line plot of the 'total_sent_usd' column with the index as the x-axis
+plt.plot(df.index, df['total_sent_usd'])
 
-# Create the line chart
-plt.plot(x, y)
-plt.xlabel('Date')
-plt.ylabel('Number of unique addresses')
-plt.title('Line chart of unique addresses over time')
+# Add a title and labels to the plot
+plt.title('Total sent USD')
+plt.xlabel('Address Index')
+plt.ylabel('Total sent USD')
 
-# Save the plot to a file
-output_folder = "./plots"
-os.makedirs(output_folder, exist_ok=True)
-output_name = "unique_addresses_over_time_linechart.png"
-output_file = os.path.join(output_folder, output_name)
-plt.savefig(output_file)
+
+# Display the plot
+plt.savefig('your_plot.png')
