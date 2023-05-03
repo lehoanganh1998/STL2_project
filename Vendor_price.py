@@ -7,8 +7,14 @@ import os
 import statistics
 import pprint
 
-addresses_df = pd.read_csv("addresses_updated_price.csv")
-btc_addresses = addresses_df['Vendor Address'].tolist()
+# read the csv file into a pandas dataframe and extract the 3 vendors
+df = pd.read_csv("result/vendor_list.csv")
+vendor_6_15 = df[(df["Num Unique Senders"] >= 6) & (df["Num Unique Senders"] <= 15)]["Vendor Address"].sample(n=1).values[0]
+vendor_16_35 = df[(df["Num Unique Senders"] >= 16) & (df["Num Unique Senders"] <= 35)]["Vendor Address"].sample(n=1).values[0]
+vendor_36_153 = df[(df["Num Unique Senders"] >= 36) & (df["Num Unique Senders"] <= 153)]["Vendor Address"].sample(n=1).values[0]
+
+# create a list of the 3 vendors
+btc_addresses = [vendor_6_15, vendor_16_35, vendor_36_153]
 
 delay_seconds = 0.1   # Delay between requests in seconds for the limit
 features = []
@@ -68,6 +74,6 @@ df = pd.DataFrame(features, columns=columns)
 # Save the DataFrame to a CSV file
 output_folder = "./result"
 os.makedirs(output_folder, exist_ok=True)
-output_name = "addresses_price.csv"
+output_name = "vendor_price.csv"
 output_file = os.path.join(output_folder, output_name)
 df.to_csv(output_file, index=False)
